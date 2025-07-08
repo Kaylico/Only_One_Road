@@ -7,7 +7,19 @@ extends CharacterBody2D
 
 @onready var anim: AnimatedSprite2D = $Anim
 
+var is_victory_state: bool = false
+
 func _physics_process(delta: float) -> void:
+	if is_victory_state:
+		velocity.x = 0.0
+		if not is_on_floor():
+			velocity.y += gravity * delta
+		else:
+			velocity.y = 0.0
+		anim.play("idle")
+		move_and_slide()
+		return
+	
 	var dir = Input.get_axis("ui_left", "ui_right")
 	velocity.x = dir * speed
 
@@ -33,3 +45,6 @@ func _physics_process(delta: float) -> void:
 func _respawn() -> void:
 	velocity = Vector2.ZERO
 	get_tree().reload_current_scene()
+
+func set_victory_state(victory: bool) -> void:
+	is_victory_state = victory

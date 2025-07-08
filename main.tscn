@@ -15,6 +15,7 @@ script/source = "extends Node2D
 @export var tween_time     : float = 0.3 
 
 var moved := false
+var game_won := false
 
 @onready var player            = $Player
 @onready var ground2           = $Ground2
@@ -23,11 +24,13 @@ var moved := false
 @onready var ground2_collision = $Ground2/CollisionShape2D
 @onready var hole_trigger      = $Ground2/HoleTrigger
 @onready var hole_sprite       = $Ground2/HoleSprite
-@onready var door_trigger      = $DoorTrigger
+@onready var door              = $Door
+@onready var door_sprite       = $Door/Sprite2D
 
 func _ready() -> void:
 	trigger.body_entered.connect(_on_GapTrigger_body_entered)
 	hole_trigger.body_entered.connect(_on_hole_trigger_body_entered)
+	door.body_entered.connect(_on_door_body_entered)
 
 func _on_GapTrigger_body_entered(body: Node) -> void:
 	if moved or body != player:
@@ -49,6 +52,19 @@ func _on_hole_trigger_body_entered(body: Node) -> void:
 	ground2_collision.set_deferred(\"disabled\", true)
 	hole_sprite.visible = true
 	hole_trigger.queue_free()
+
+func _on_door_body_entered(body: Node) -> void:
+	if body != player or game_won:
+		return
+	
+	game_won = true
+	# Set player to victory state
+	player.set_victory_state(true)
+	
+	# Set door to black
+	door_sprite.modulate = Color.BLACK
+	
+	print(\"Victory! Player reached the door!\")
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h2yge"]
