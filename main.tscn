@@ -1,0 +1,210 @@
+[gd_scene load_steps=17 format=3 uid="uid://bevb2ftr6gdex"]
+
+[ext_resource type="Texture2D" uid="uid://xn4f3d6ng7vx" path="res://assets/Basic_Door_Pixel.png" id="1_0xm2m"]
+[ext_resource type="Script" uid="uid://b213m24fwdo40" path="res://player.gd" id="2_1bvp3"]
+[ext_resource type="Texture2D" uid="uid://b64dlrgmoapb2" path="res://assets/Player/man-stand.png" id="3_lquwl"]
+[ext_resource type="Texture2D" uid="uid://cvg5dhgts77p8" path="res://assets/Player/man-run1.png" id="4_7mycd"]
+[ext_resource type="Texture2D" uid="uid://brvv6ooahd2o3" path="res://assets/Player/man-run3.png" id="5_272bh"]
+[ext_resource type="AudioStream" uid="uid://d23ui5gugvsxy" path="res://assets/audio/untitled.mp3" id="6_7mycd"]
+
+[sub_resource type="GDScript" id="GDScript_lquwl"]
+script/source = "extends Node2D
+
+@export var shift_distance_1 : float = 100.0
+@export var shift_distance_2 : float = 120.0
+@export var tween_time     : float = 0.3 
+
+var moved := false
+
+@onready var player            = $Player
+@onready var ground2           = $Ground2
+@onready var ground3           = $Ground3
+@onready var trigger           = $GapTrigger
+@onready var ground2_collision = $Ground2/CollisionShape2D
+@onready var hole_trigger      = $Ground2/HoleTrigger
+@onready var hole_sprite       = $Ground2/HoleSprite
+@onready var door_trigger      = $DoorTrigger
+
+func _ready() -> void:
+	trigger.body_entered.connect(_on_GapTrigger_body_entered)
+	hole_trigger.body_entered.connect(_on_hole_trigger_body_entered)
+
+func _on_GapTrigger_body_entered(body: Node) -> void:
+	if moved or body != player:
+		return
+	moved = true
+	var tw = get_tree().create_tween()
+	tw.tween_property(ground2, \"position:x\",
+		ground2.position.x + shift_distance_1,
+		tween_time
+	)
+	tw.tween_property(ground3, \"position:x\",
+		ground3.position.x + shift_distance_2,
+		tween_time
+	)
+
+func _on_hole_trigger_body_entered(body: Node) -> void:
+	if body != player:
+		return
+	ground2_collision.set_deferred(\"disabled\", true)
+	hole_sprite.visible = true
+	hole_trigger.queue_free()
+"
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_h2yge"]
+size = Vector2(1148.8, 83.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_272bh"]
+size = Vector2(678.5, 210)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kek77"]
+size = Vector2(44.5, 5.5)
+
+[sub_resource type="GDScript" id="GDScript_7mycd"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7mycd"]
+size = Vector2(584.245, 210.75)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ig7tw"]
+size = Vector2(52.5, 86.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1bvp3"]
+size = Vector2(34, 62)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_5vw27"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_lquwl")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_7mycd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_272bh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_272bh")
+}],
+"loop": true,
+"name": &"run",
+"speed": 10.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5vw27"]
+size = Vector2(5, 185.5)
+
+[node name="Main" type="Node2D"]
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="UILayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.827451, 0.611765, 0.415686, 1)
+
+[node name="Level" type="Node2D" parent="UILayer"]
+script = SubResource("GDScript_lquwl")
+
+[node name="Ground" type="StaticBody2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground"]
+position = Vector2(576.602, 46.25)
+shape = SubResource("RectangleShape2D_h2yge")
+
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground"]
+offset_left = -1.0
+offset_top = -2.0
+offset_right = 1151.0
+offset_bottom = 89.0
+color = Color(0.329384, 0.156731, 0.100474, 1)
+
+[node name="Ground2" type="StaticBody2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2"]
+position = Vector2(433.75, 542)
+shape = SubResource("RectangleShape2D_272bh")
+
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground2"]
+offset_left = 92.0
+offset_top = 435.0
+offset_right = 777.0
+offset_bottom = 648.0
+color = Color(0.329384, 0.156731, 0.100474, 1)
+
+[node name="HoleTrigger" type="Area2D" parent="UILayer/Level/Ground2"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2/HoleTrigger"]
+position = Vector2(205.75, 432.75)
+shape = SubResource("RectangleShape2D_kek77")
+
+[node name="HoleSprite" type="ColorRect" parent="UILayer/Level/Ground2"]
+visible = false
+offset_left = 151.0
+offset_top = 432.0
+offset_right = 363.0
+offset_bottom = 650.0
+color = Color(0.827451, 0.611765, 0.415686, 1)
+
+[node name="Ground3" type="StaticBody2D" parent="UILayer/Level"]
+script = SubResource("GDScript_7mycd")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground3"]
+position = Vector2(1157.88, 540.625)
+shape = SubResource("RectangleShape2D_7mycd")
+
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground3"]
+offset_left = 866.0
+offset_top = 435.0
+offset_right = 1450.0
+offset_bottom = 647.0
+color = Color(0.329384, 0.156731, 0.100474, 1)
+
+[node name="Door" type="Area2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Door"]
+position = Vector2(1041.75, 387)
+shape = SubResource("RectangleShape2D_ig7tw")
+
+[node name="Sprite2D" type="Sprite2D" parent="UILayer/Level/Door"]
+position = Vector2(1039, 390)
+scale = Vector2(3.40625, 3.1875)
+texture = ExtResource("1_0xm2m")
+
+[node name="Player" type="CharacterBody2D" parent="UILayer/Level"]
+position = Vector2(78, -30)
+script = ExtResource("2_1bvp3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Player"]
+position = Vector2(53, 434)
+shape = SubResource("RectangleShape2D_1bvp3")
+
+[node name="Anim" type="AnimatedSprite2D" parent="UILayer/Level/Player"]
+position = Vector2(54, 435)
+sprite_frames = SubResource("SpriteFrames_5vw27")
+animation = &"idle"
+frame_progress = 0.588515
+
+[node name="SpawnPoint" type="Marker2D" parent="UILayer/Level"]
+gizmo_extents = 22.7
+
+[node name="GapTrigger" type="Area2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/GapTrigger"]
+position = Vector2(772.5, 345.75)
+shape = SubResource("RectangleShape2D_5vw27")
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="UILayer"]
+stream = ExtResource("6_7mycd")
+volume_db = 0.133
+autoplay = true
+attenuation = 0.277393
+parameters/looping = true
