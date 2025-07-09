@@ -58,13 +58,14 @@ func _on_door_body_entered(body: Node) -> void:
 		return
 	
 	game_won = true
-	# Set player to victory state
-	player.set_victory_state(true)
-	
 	# Set door to black
 	door_sprite.modulate = Color.BLACK
 	
-	print(\"Victory! Player reached the door!\")
+	print(\"Entering Level 2...\")
+	
+	# Wait a moment then switch to level 2
+	await get_tree().create_timer(0.5).timeout
+	get_tree().change_scene_to_file(\"res://level2.tscn\")
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h2yge"]
