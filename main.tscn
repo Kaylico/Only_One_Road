@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://bevb2ftr6gdex"]
+[gd_scene load_steps=19 format=3 uid="uid://bevb2ftr6gdex"]
 
 [ext_resource type="Texture2D" uid="uid://xn4f3d6ng7vx" path="res://assets/Basic_Door_Pixel.png" id="1_0xm2m"]
 [ext_resource type="Script" uid="uid://b213m24fwdo40" path="res://player.gd" id="2_1bvp3"]
@@ -18,12 +18,13 @@ var moved := false
 var game_won := false
 
 @onready var player            = $Player
-@onready var ground2           = $Ground2
+@onready var ground2_left      = $Ground2Left
+@onready var ground2_hole      = $Ground2Hole
+@onready var ground2_right     = $Ground2Right
 @onready var ground3           = $Ground3
 @onready var trigger           = $GapTrigger
-@onready var ground2_collision = $Ground2/CollisionShape2D
-@onready var hole_trigger      = $Ground2/HoleTrigger
-@onready var hole_sprite       = $Ground2/HoleSprite
+@onready var hole_trigger      = $Ground2Hole/HoleTrigger
+@onready var hole_sprite       = $Ground2Hole/HoleSprite
 @onready var door              = $Door
 @onready var door_sprite       = $Door/Sprite2D
 
@@ -37,11 +38,19 @@ func _on_GapTrigger_body_entered(body: Node) -> void:
 		return
 	moved = true
 	var tw = get_tree().create_tween()
-	tw.tween_property(ground2, \"position:x\",
-		ground2.position.x + shift_distance_1,
+	tw.tween_property(ground2_left, \"position:x\",
+		ground2_left.position.x + shift_distance_1,
 		tween_time
 	)
-	tw.tween_property(ground3, \"position:x\",
+	tw.parallel().tween_property(ground2_hole, \"position:x\",
+		ground2_hole.position.x + shift_distance_1,
+		tween_time
+	)
+	tw.parallel().tween_property(ground2_right, \"position:x\",
+		ground2_right.position.x + shift_distance_1,
+		tween_time
+	)
+	tw.parallel().tween_property(ground3, \"position:x\",
 		ground3.position.x + shift_distance_2,
 		tween_time
 	)
@@ -49,8 +58,7 @@ func _on_GapTrigger_body_entered(body: Node) -> void:
 func _on_hole_trigger_body_entered(body: Node) -> void:
 	if body != player:
 		return
-	ground2_collision.set_deferred(\"disabled\", true)
-	hole_sprite.visible = true
+	hole_sprite.visible = false
 	hole_trigger.queue_free()
 
 func _on_door_body_entered(body: Node) -> void:
@@ -71,11 +79,17 @@ func _on_door_body_entered(body: Node) -> void:
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h2yge"]
 size = Vector2(1148.8, 83.5)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_272bh"]
-size = Vector2(678.5, 210)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground2_left"]
+size = Vector2(233, 210)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hole"]
+size = Vector2(120, 218)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kek77"]
 size = Vector2(44.5, 5.5)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground2_right"]
+size = Vector2(358, 213)
 
 [sub_resource type="GDScript" id="GDScript_7mycd"]
 
@@ -144,32 +158,52 @@ offset_right = 1151.0
 offset_bottom = 89.0
 color = Color(0.329384, 0.156731, 0.100474, 1)
 
-[node name="Ground2" type="StaticBody2D" parent="UILayer/Level"]
+[node name="Ground2Left" type="StaticBody2D" parent="UILayer/Level"]
+position = Vector2(92, 0)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2"]
-position = Vector2(433.75, 542)
-shape = SubResource("RectangleShape2D_272bh")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2Left"]
+position = Vector2(116.5, 542)
+shape = SubResource("RectangleShape2D_ground2_left")
 
-[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground2"]
-offset_left = 92.0
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground2Left"]
 offset_top = 435.0
-offset_right = 777.0
+offset_right = 233.0
 offset_bottom = 648.0
 color = Color(0.329384, 0.156731, 0.100474, 1)
 
-[node name="HoleTrigger" type="Area2D" parent="UILayer/Level/Ground2"]
+[node name="Ground2Hole" type="StaticBody2D" parent="UILayer/Level"]
+position = Vector2(323.5, 541)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2/HoleTrigger"]
-position = Vector2(205.75, 432.75)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2Hole"]
+position = Vector2(65.5, 541)
+shape = SubResource("RectangleShape2D_hole")
+
+[node name="HoleTrigger" type="Area2D" parent="UILayer/Level/Ground2Hole"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2Hole/HoleTrigger"]
+position = Vector2(0, -108.25)
 shape = SubResource("RectangleShape2D_kek77")
 
-[node name="HoleSprite" type="ColorRect" parent="UILayer/Level/Ground2"]
-visible = false
-offset_left = 151.0
-offset_top = 432.0
-offset_right = 363.0
-offset_bottom = 650.0
-color = Color(0.827451, 0.611765, 0.415686, 1)
+[node name="HoleSprite" type="ColorRect" parent="UILayer/Level/Ground2Hole"]
+offset_left = -0.5
+offset_top = -106.0
+offset_right = 349.5
+offset_bottom = 107.0
+color = Color(0.329384, 0.156731, 0.100474, 1)
+
+[node name="Ground2Right" type="StaticBody2D" parent="UILayer/Level"]
+position = Vector2(565, 541)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2Right"]
+position = Vector2(29, 0)
+shape = SubResource("RectangleShape2D_ground2_right")
+
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground2Right"]
+offset_left = -150.0
+offset_top = -106.0
+offset_right = 208.0
+offset_bottom = 107.0
+color = Color(0.329384, 0.156731, 0.100474, 1)
 
 [node name="Ground3" type="StaticBody2D" parent="UILayer/Level"]
 script = SubResource("GDScript_7mycd")
