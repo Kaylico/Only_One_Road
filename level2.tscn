@@ -88,10 +88,11 @@ func create_wall_hole(destruction_start_x: float = 700.0) -> void:
 
 	# Create left wall part
 	var wall_left = StaticBody2D.new()
+	wall_left.name = \"Wall\"
 	var wall_left_collision = CollisionShape2D.new()
 	var wall_left_shape = RectangleShape2D.new()
 	var left_width = 1000.0 - destruction_end_x
-	wall_left.position = Vector2(700.0 + left_width / 2, 300)  # World position
+	wall_left.position = Vector2(700.0 + left_width / 2, 200)  # World position
 	wall_left_shape.size = Vector2(left_width, 400)
 	wall_left_collision.shape = wall_left_shape
 	wall_left_collision.position = Vector2(0, 0)  # Local position
@@ -104,7 +105,6 @@ func create_wall_hole(destruction_start_x: float = 700.0) -> void:
 	wall_left_visual.offset_right = left_width / 2
 	wall_left_visual.offset_bottom = 200.0
 	wall_left_visual.color = Color(0, 0.5, 1, 1)
-
 	wall_left.add_child(wall_left_visual)
 	add_child(wall_left)
 
