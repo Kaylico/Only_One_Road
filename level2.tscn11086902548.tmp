@@ -14,13 +14,11 @@ script/source = "extends Node2D
 @onready var canon = $Canon
 @onready var trigger_area = $RedTrigger
 @onready var player = $Player
-@onready var door = $Door
 
 # Cannonball created dynamically
 
 func _ready() -> void:
 	trigger_area.body_entered.connect(_on_trigger_area_body_entered)
-	door.body_entered.connect(_on_door_body_entered)
 
 func _on_trigger_area_body_entered(body: Node) -> void:
 	if body == player:
@@ -42,10 +40,8 @@ func fire_cannonball() -> void:
 	cannonball.add_child(sprite)
 	cannonball.position = Vector2(330, 450)  # Canon mouth position
 	
+	# Connect collision detection for wall destruction
 	cannonball.body_entered.connect(func(body): _on_cannonball_hit_wall(cannonball, body))
-
-	# Connect collision detection for player destruction
-	cannonball.body_entered.connect(func(body): _on_cannonball_hit_player(cannonball, body))
 	
 	add_child(cannonball)
 	
@@ -57,11 +53,6 @@ func fire_cannonball() -> void:
 			cannonball.queue_free()
 	)
 
-func _on_cannonball_hit_player(cannonball: Area2D, body: Node) -> void:
-	if body.name == \"Player\" and body.has_method(\"_respawn\"):
-		body._respawn()
-		cannonball.queue_free()
-
 func _on_cannonball_hit_wall(cannonball: Area2D, body: Node) -> void:
 	if body.name == \"Wall\":
 		var hit_position_x = cannonball.position.x
@@ -72,70 +63,45 @@ func create_wall_hole(destruction_start_x: float = 700.0) -> void:
 	var wall = $Wall
 	if not wall:
 		return
-
+		
 	print(\"Creating wall hole at position: \", destruction_start_x) 
-
+		
 	# Player height and destruction parameters
 	var player_height = 150.0  # Player collision height
 	var ground_level = 500.0   # Ground Y position
 	var destruction_width = 75.0  # Width of destroyed area
-
+	var destruction_height = 400.0  # Height equals player height
+	
 	# Calculate destruction area (from ground up to player height)
 	var destruction_end_x = destruction_start_x + destruction_width
-
-	# COMPLETELY remove the original wall
-	wall.queue_free()
-
-	# Create left wall part
-	var wall_left = StaticBody2D.new()
-	var wall_left_collision = CollisionShape2D.new()
-	var wall_left_shape = RectangleShape2D.new()
-	var left_width = 1000.0 - destruction_end_x
-	wall_left.position = Vector2(700.0 + left_width / 2, 300)  # World position
-	wall_left_shape.size = Vector2(left_width, 400)
-	wall_left_collision.shape = wall_left_shape
-	wall_left_collision.position = Vector2(0, 0)  # Local position
-	wall_left.add_child(wall_left_collision)
-
-	# Left wall visual
-	var wall_left_visual = ColorRect.new()
-	wall_left_visual.offset_left = -left_width / 2
-	wall_left_visual.offset_top = -200.0
-	wall_left_visual.offset_right = left_width / 2
-	wall_left_visual.offset_bottom = 200.0
-	wall_left_visual.color = Color(0, 0.5, 1, 1)
-
-	wall_left.add_child(wall_left_visual)
-	add_child(wall_left)
-
-	print(\"Wall hole created successfully!\")
-
-func _on_door_body_entered(body: Node) -> void:
-	if body.name == \"Player\":
-		show_victory_and_quit()
-
-func show_victory_and_quit() -> void:
-	var victory_label = Label.new()
-	victory_label.text = \"You Win!\"
-	victory_label.add_theme_color_override(\"font_color\", Color(0, 0, 0))  # 黑色
-
-	# 居中显示
-	victory_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	victory_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	victory_label.anchor_left = 0.0
-	victory_label.anchor_right = 1.0
-	victory_label.anchor_top = 0.0
-	victory_label.anchor_bottom = 1.0
-	victory_label.margin_left = 0
-	victory_label.margin_top = 0
-	victory_label.margin_right = 0
-	victory_label.margin_bottom = 0
-	victory_label.set_scale(Vector2(3, 3))
-
-	add_child(victory_label)
+	var destruction_start_y = ground_level - destruction_height  # Top of destruction
+	var destruction_end_y = ground_level  # Bottom (ground level)
 	
-	await get_tree().create_timer(2.0).timeout
-	get_tree().quit()
+	# COMPLETELY remove the original wall
+        wall.queue_free()
+
+    var wall_left = StaticBody2D.new()
+	var wall_left_collision = CollisionShape2D.new()
+    var wall_left_shape = RectangleShape2D.new() 
+    
+    var left_width = 1000.0 - destruction_end_x
+    wall_left_shape.size = Vector2(left_width, 400)
+    wall_left_collision.shape = wall_left_shape
+    wall_left_collision.position = Vector2(0, 0)  # Local position
+    wall_left.position = Vector2(700.0 + left_width/2, 200)  # World position
+    wall_left.add_child(wall_left_collision)
+    add_child(wall_left)
+    
+    # Left wall visual
+    var wall_left_visual = ColorRect.new()
+    wall_left_visual.offset_left = -left_width / 2
+    wall_left_visual.offset_top = -200.0
+    wall_left_visual.offset_right = left_width / 2
+    wall_left_visual.offset_bottom = 200.0
+    wall_left_visual.color = Color(0, 0.5, 1, 1)
+    add_child(wall_left_visual)
+    
+	print(\"Wall hole created successfully!\")
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
