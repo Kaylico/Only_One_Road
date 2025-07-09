@@ -1,0 +1,85 @@
+[gd_scene load_steps=7 format=3 uid="uid://bhnw4d7e8f2xg"]
+
+[ext_resource type="Script" uid="uid://b213m24fwdo40" path="res://player.gd" id="1_abc123"]
+[ext_resource type="Texture2D" uid="uid://b64dlrgmoapb2" path="res://assets/Player/man-stand.png" id="2_def456"]
+[ext_resource type="Texture2D" uid="uid://cvg5dhgts77p8" path="res://assets/Player/man-run1.png" id="3_ghi789"]
+[ext_resource type="Texture2D" uid="uid://brvv6ooahd2o3" path="res://assets/Player/man-run3.png" id="4_jkl012"]
+[ext_resource type="AudioStream" uid="uid://d23ui5gugvsxy" path="res://assets/audio/untitled.mp3" id="5_mno345"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
+size = Vector2(1920, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(34, 62)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_player"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_def456")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_ghi789")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_jkl012")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_jkl012")
+}],
+"loop": true,
+"name": &"run",
+"speed": 10.0
+}]
+
+[node name="Level2" type="Node2D"]
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="Background" type="ColorRect" parent="UILayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1.0, 1.0, 0.0, 1.0)
+
+[node name="Level" type="Node2D" parent="UILayer"]
+
+[node name="Ground" type="StaticBody2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground"]
+position = Vector2(960, 550)
+shape = SubResource("RectangleShape2D_ground")
+
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground"]
+offset_left = 0.0
+offset_top = 500.0
+offset_right = 1920.0
+offset_bottom = 600.0
+color = Color(0.0, 0.5, 1.0, 1.0)
+
+[node name="Player" type="CharacterBody2D" parent="UILayer/Level"]
+position = Vector2(100, 400)
+script = ExtResource("1_abc123")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Player"]
+position = Vector2(0, 0)
+shape = SubResource("RectangleShape2D_player")
+
+[node name="Anim" type="AnimatedSprite2D" parent="UILayer/Level/Player"]
+position = Vector2(0, 0)
+sprite_frames = SubResource("SpriteFrames_player")
+animation = &"idle"
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="UILayer"]
+stream = ExtResource("5_mno345")
+volume_db = 0.133
+autoplay = true
+attenuation = 0.277393
+parameters/looping = true 
