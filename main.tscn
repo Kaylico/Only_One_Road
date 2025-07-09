@@ -86,7 +86,7 @@ size = Vector2(233, 210)
 size = Vector2(120, 218)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kek77"]
-size = Vector2(44.5, 5.5)
+size = Vector2(45.75, 5.5)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground2_right"]
 size = Vector2(358, 213)
@@ -181,7 +181,7 @@ shape = SubResource("RectangleShape2D_hole")
 [node name="HoleTrigger" type="Area2D" parent="UILayer/Level/Ground2Hole"]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground2Hole/HoleTrigger"]
-position = Vector2(0, -108.25)
+position = Vector2(45.75, -108.25)
 shape = SubResource("RectangleShape2D_kek77")
 
 [node name="HoleSprite" type="ColorRect" parent="UILayer/Level/Ground2Hole"]
