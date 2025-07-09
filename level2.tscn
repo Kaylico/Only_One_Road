@@ -1,13 +1,178 @@
-[gd_scene load_steps=7 format=3 uid="uid://bhnw4d7e8f2xg"]
+[gd_scene load_steps=16 format=3 uid="uid://ydnet07x65ud"]
 
 [ext_resource type="Script" uid="uid://b213m24fwdo40" path="res://player.gd" id="1_abc123"]
 [ext_resource type="Texture2D" uid="uid://b64dlrgmoapb2" path="res://assets/Player/man-stand.png" id="2_def456"]
 [ext_resource type="Texture2D" uid="uid://cvg5dhgts77p8" path="res://assets/Player/man-run1.png" id="3_ghi789"]
 [ext_resource type="Texture2D" uid="uid://brvv6ooahd2o3" path="res://assets/Player/man-run3.png" id="4_jkl012"]
 [ext_resource type="AudioStream" uid="uid://d23ui5gugvsxy" path="res://assets/audio/untitled.mp3" id="5_mno345"]
+[ext_resource type="Texture2D" uid="uid://xn4f3d6ng7vx" path="res://assets/Basic_Door_Pixel.png" id="6_door123"]
+[ext_resource type="Texture2D" uid="uid://cgvr0lr2b2nid" path="res://assets/canon/Canon_1.png" id="7_canon123"]
+
+[sub_resource type="GDScript" id="GDScript_level2"]
+script/source = "extends Node2D
+
+@onready var canon = $Canon
+@onready var trigger_area = $RedTrigger
+@onready var player = $Player
+
+# Cannonball created dynamically
+
+func _ready() -> void:
+	trigger_area.body_entered.connect(_on_trigger_area_body_entered)
+
+func _on_trigger_area_body_entered(body: Node) -> void:
+	if body == player:
+		fire_cannonball()
+
+func fire_cannonball() -> void:
+	var cannonball = Area2D.new()
+	var sprite = Sprite2D.new()
+	var collision = CollisionShape2D.new()
+	var shape = CircleShape2D.new()
+	
+	# Setup cannonball
+	shape.radius = 10
+	collision.shape = shape
+	sprite.texture = preload(\"res://assets/canon/Projectile-CannonBalll.png\")
+	sprite.scale = Vector2(1.5, 1.5)
+	
+	cannonball.add_child(collision)
+	cannonball.add_child(sprite)
+	cannonball.position = Vector2(330, 450)  # Canon mouth position
+	
+	# Connect collision detection for wall destruction
+	cannonball.body_entered.connect(_on_cannonball_hit_wall.bind(cannonball))
+	
+	add_child(cannonball)
+	
+	# Move cannonball horizontally using Tween
+	var tween = get_tree().create_tween()
+	tween.tween_property(cannonball, \"position:x\", 1200, 2.0)  # Move to x=1200 in 2 seconds
+	tween.tween_callback(func(): 
+		if cannonball and is_instance_valid(cannonball):
+			cannonball.queue_free()
+	)
+
+func _on_cannonball_hit_wall(cannonball: Area2D, body: Node) -> void:
+	if body.name == \"Wall\":
+		create_wall_hole()
+		cannonball.queue_free()
+
+func create_wall_hole() -> void:
+	var wall = $Wall
+	if not wall:
+		return
+		
+	print(\"Creating wall hole...\")  # Debug message
+		
+	# Player height and destruction parameters
+	var player_height = 150.0  # Player collision height
+	var ground_level = 500.0   # Ground Y position
+	var destruction_width = 80.0  # Width of destroyed area
+	var destruction_height = player_height  # Height equals player height
+	
+	# Calculate destruction area (from ground up to player height)
+	var destruction_start_x = 840.0  # Start X position of destruction
+	var destruction_end_x = destruction_start_x + destruction_width
+	var destruction_start_y = ground_level - destruction_height  # Top of destruction
+	var destruction_end_y = ground_level  # Bottom (ground level)
+	
+	# COMPLETELY remove the original wall
+	wall.queue_free()
+	
+	# Create destroyed area overlay (background color)
+	var destroyed_area = ColorRect.new()
+	destroyed_area.offset_left = destruction_start_x
+	destroyed_area.offset_top = destruction_start_y
+	destroyed_area.offset_right = destruction_end_x
+	destroyed_area.offset_bottom = destruction_end_y
+	destroyed_area.color = Color(1, 1, 0, 1)  # Background color
+	destroyed_area.z_index = 10  # Make sure it's visible above other elements
+	add_child(destroyed_area)
+	
+	# Create LEFT wall part (from x=700 to destruction start)
+	var wall_left = StaticBody2D.new()
+	var wall_left_collision = CollisionShape2D.new()
+	var wall_left_shape = RectangleShape2D.new()
+	
+	var left_width = destruction_start_x - 700.0
+	wall_left_shape.size = Vector2(left_width, 400)
+	wall_left_collision.shape = wall_left_shape
+	wall_left_collision.position = Vector2(0, 0)  # Local position
+	wall_left.position = Vector2(700.0 + left_width/2, 300)  # World position
+	wall_left.add_child(wall_left_collision)
+	add_child(wall_left)
+	
+	# Left wall visual
+	var wall_left_visual = ColorRect.new()
+	wall_left_visual.offset_left = 700.0
+	wall_left_visual.offset_top = 100.0
+	wall_left_visual.offset_right = destruction_start_x
+	wall_left_visual.offset_bottom = 500.0
+	wall_left_visual.color = Color(0, 0.5, 1, 1)
+	add_child(wall_left_visual)
+	
+	# Create RIGHT wall part (from destruction end to x=1000)
+	var wall_right = StaticBody2D.new()
+	var wall_right_collision = CollisionShape2D.new()
+	var wall_right_shape = RectangleShape2D.new()
+	
+	var right_width = 1000.0 - destruction_end_x
+	wall_right_shape.size = Vector2(right_width, 400)
+	wall_right_collision.shape = wall_right_shape
+	wall_right_collision.position = Vector2(0, 0)  # Local position
+	wall_right.position = Vector2(destruction_end_x + right_width/2, 300)  # World position
+	wall_right.add_child(wall_right_collision)
+	add_child(wall_right)
+	
+	# Right wall visual
+	var wall_right_visual = ColorRect.new()
+	wall_right_visual.offset_left = destruction_end_x
+	wall_right_visual.offset_top = 100.0
+	wall_right_visual.offset_right = 1000.0
+	wall_right_visual.offset_bottom = 500.0
+	wall_right_visual.color = Color(0, 0.5, 1, 1)
+	add_child(wall_right_visual)
+	
+	# Create TOP wall part (above destroyed area)
+	var wall_top = StaticBody2D.new()
+	var wall_top_collision = CollisionShape2D.new()
+	var wall_top_shape = RectangleShape2D.new()
+	
+	var top_height = destruction_start_y - 100.0
+	wall_top_shape.size = Vector2(destruction_width, top_height)
+	wall_top_collision.shape = wall_top_shape
+	wall_top_collision.position = Vector2(0, 0)  # Local position
+	wall_top.position = Vector2(destruction_start_x + destruction_width/2, 100.0 + top_height/2)  # World position
+	wall_top.add_child(wall_top_collision)
+	add_child(wall_top)
+	
+	# Top wall visual
+	var wall_top_visual = ColorRect.new()
+	wall_top_visual.offset_left = destruction_start_x
+	wall_top_visual.offset_top = 100.0
+	wall_top_visual.offset_right = destruction_end_x
+	wall_top_visual.offset_bottom = destruction_start_y
+	wall_top_visual.color = Color(0, 0.5, 1, 1)
+	add_child(wall_top_visual)
+	
+	print(\"Wall hole created successfully!\")
+"
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
-size = Vector2(1920, 100)
+size = Vector2(1920, 200)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(300, 400)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
+size = Vector2(100, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_canon"]
+size = Vector2(60, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_door"]
+size = Vector2(52.5, 86.5)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(34, 62)
@@ -47,33 +212,79 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(1.0, 1.0, 0.0, 1.0)
+color = Color(1, 1, 0, 1)
 
 [node name="Level" type="Node2D" parent="UILayer"]
+script = SubResource("GDScript_level2")
 
 [node name="Ground" type="StaticBody2D" parent="UILayer/Level"]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Ground"]
-position = Vector2(960, 550)
+position = Vector2(960, 600)
 shape = SubResource("RectangleShape2D_ground")
 
 [node name="ColorRect" type="ColorRect" parent="UILayer/Level/Ground"]
-offset_left = 0.0
 offset_top = 500.0
 offset_right = 1920.0
-offset_bottom = 600.0
-color = Color(0.0, 0.5, 1.0, 1.0)
+offset_bottom = 1080.0
+color = Color(0, 0.5, 1, 1)
+
+[node name="Wall" type="StaticBody2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Wall"]
+position = Vector2(850, 300)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/Wall"]
+offset_left = 700.0
+offset_top = 100.0
+offset_right = 1000.0
+offset_bottom = 500.0
+color = Color(0, 0.5, 1, 1)
+
+[node name="RedTrigger" type="Area2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/RedTrigger"]
+position = Vector2(500, 490)
+shape = SubResource("RectangleShape2D_trigger")
+
+[node name="ColorRect" type="ColorRect" parent="UILayer/Level/RedTrigger"]
+offset_left = 450.0
+offset_top = 480.0
+offset_right = 550.0
+offset_bottom = 500.0
+color = Color(1, 0, 0, 1)
+
+[node name="Canon" type="StaticBody2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Canon"]
+position = Vector2(280, 470)
+shape = SubResource("RectangleShape2D_canon")
+
+[node name="Sprite2D" type="Sprite2D" parent="UILayer/Level/Canon"]
+position = Vector2(280, 470)
+scale = Vector2(2, 2)
+texture = ExtResource("7_canon123")
+
+[node name="Door" type="Area2D" parent="UILayer/Level"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Door"]
+position = Vector2(1080, 457)
+shape = SubResource("RectangleShape2D_door")
+
+[node name="Sprite2D" type="Sprite2D" parent="UILayer/Level/Door"]
+position = Vector2(1080, 460)
+scale = Vector2(3.40625, 3.1875)
+texture = ExtResource("6_door123")
 
 [node name="Player" type="CharacterBody2D" parent="UILayer/Level"]
 position = Vector2(100, 400)
 script = ExtResource("1_abc123")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="UILayer/Level/Player"]
-position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_player")
 
 [node name="Anim" type="AnimatedSprite2D" parent="UILayer/Level/Player"]
-position = Vector2(0, 0)
 sprite_frames = SubResource("SpriteFrames_player")
 animation = &"idle"
 
@@ -82,4 +293,4 @@ stream = ExtResource("5_mno345")
 volume_db = 0.133
 autoplay = true
 attenuation = 0.277393
-parameters/looping = true 
+parameters/looping = true
